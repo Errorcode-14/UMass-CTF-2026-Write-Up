@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title></title>
+
+
+  <style>
+    /* ================================================================
+       CYBER TERMINAL THEME  v3  —  All-in-One Pandoc Template
+       Base: #1e1e1e  |  Overlays: grain + grid + scanlines + vignette + noise
+       Themes: Cyber Cyan (default)  |  Cyber Green (.theme-green on <html>)
+       Fixes v3: copy button, collapsible sections, theme var scope, grain layer
+    ================================================================ */
+
+    /* ── THEME TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg-base:        #050D0C;
+      --bg-surface:     #000000;
+      --bg-raised:      #2d2d2d;
+      --text-primary:   #d4d4d4;
+      --text-muted:     #6a7a76;
+
+      /* Cyan (default) */
+      --accent:         #00d9ff;
+      --accent-dim:     rgba(0,217,255,0.12);
+      --accent-glow:    rgba(0,217,255,0.22);
+      --accent-soft:    rgba(0,217,255,0.55);
+      --grid-line:      rgba(0,190,160,0.13);
+      --grid-blur:      rgba(0,190,160,0.07);
+      --noise-color:    rgba(0,180,140,0.18);
+      --grid-size:      48px;
+
+      --h1-c:  #00d9ff;
+      --h2-c:  #ff9d00;
+      --h3-c:  #ffd700;
+      --h4-c:  #ff00ff;
+      --h5-c:  #00ff41;
+      --h6-c:  #a277ff;
+
+      --c-green:   #00ff41;
+      --c-orange:  #ff9d00;
+      --c-yellow:  #ffd700;
+      --c-magenta: #ff00ff;
+      --c-red:     #ff4757;
+      --c-purple:  #a277ff;
+      --c-blue:    #61afef;
+      --c-link:    #00d9ff;
+      --c-link-hv: #ff00ff;
+      --c-hr:      #ff00ff;
+    }
+
+    /* ── GREEN THEME ──────────────────────────────────────────────── */
+    html.theme-green {
+      --accent:         #00ff41;
+      --accent-dim:     rgba(0,255,65,0.10);
+      --accent-glow:    rgba(0,255,65,0.20);
+      --accent-soft:    rgba(0,255,65,0.55);
+      --grid-line:      rgba(0,210,80,0.13);
+      --grid-blur:      rgba(0,210,80,0.07);
+      --noise-color:    rgba(0,220,80,0.17);
+
+      --h1-c:  #00ff41;
+      --h2-c:  #b8ff6e;
+      --h3-c:  #39ff14;
+      --h4-c:  #00ffa3;
+      --h5-c:  #57ff8f;
+      --h6-c:  #00d4aa;
+
+      --c-orange:  #b8ff6e;
+      --c-yellow:  #39ff14;
+      --c-magenta: #00ffa3;
+      --c-purple:  #57ff8f;
+      --c-blue:    #00d4aa;
+      --c-link:    #00ff41;
+      --c-link-hv: #b8ff6e;
+      --c-hr:      #39ff14;
+      --text-muted: #3a7050;
+    }
+
+    /* ── RESET ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── HTML BASE ─────────────────────────────────────────────────── */
+    html { min-height: 100%; background-color: var(--bg-base); position: relative; }
+
+    /* ── OVERLAY A: sharp grid ─────────────────────────────────────── */
+    html::before {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 1;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: var(--grid-size) var(--grid-size);
+      transition: background-image 0.5s;
+    }
+
+    /* ── OVERLAY B: blurred grid glow ─────────────────────────────── */
+    html::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 2;
+      background-image:
+        linear-gradient(var(--grid-blur) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-blur) 1px, transparent 1px);
+      background-size: var(--grid-size) var(--grid-size);
+      filter: blur(1.2px);
+      transition: background-image 0.5s;
+    }
+
+    /* ── OVERLAY C: grain texture (SVG feTurbulence, no external files) */
+    #grain {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 3;
+      opacity: 0.16;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 300px 300px;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── OVERLAY D: scanlines ──────────────────────────────────────── */
+    #scanlines {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 4;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent, transparent 3px,
+        rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+      );
+    }
+
+    /* ── OVERLAY E: vignette ───────────────────────────────────────── */
+    #vignette {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 5;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.62) 100%);
+    }
+
+    /* ── OVERLAY F: floating terminal text ─────────────────────────── */
+    #bg-noise {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 9;
+      overflow: visible;
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      user-select: none;
+    }
+    #bg-noise span {
+      position: absolute; white-space: nowrap;
+      letter-spacing: 0.10em; filter: blur(0.5px);
+      transition: color 0.10s;
+    }
+
+    /* ── THEME TOGGLE BUTTON ───────────────────────────────────────── */
+    #theme-toggle {
+      position: fixed; top: 1rem; right: 1.2rem; z-index: 500;
+      background: rgba(20,20,20,0.82);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      font-size: 0.72rem; padding: 0.3rem 0.75rem; border-radius: 3px;
+      cursor: pointer; text-shadow: 0 0 6px var(--accent);
+      box-shadow: 0 0 10px var(--accent-dim);
+      letter-spacing: 0.06em;
+      transition: border-color 0.3s, color 0.3s, text-shadow 0.3s, box-shadow 0.3s;
+      backdrop-filter: blur(6px);
+    }
+    #theme-toggle:hover { background: var(--accent-dim); box-shadow: 0 0 20px var(--accent-glow); }
+
+    /* ── BODY ──────────────────────────────────────────────────────── */
+    body {
+      position: relative; z-index: 10;
+      background: transparent;
+      color: var(--text-primary);
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      line-height: 1.65;
+      padding: 2.5rem 2rem 5rem;
+      max-width: 940px; margin: 0 auto;
+    }
+
+    /* ── HEADINGS ──────────────────────────────────────────────────── */
+    h1 {
+      color: var(--h1-c); font-size: 2.4rem; margin: 2.2rem 0 1rem;
+      text-shadow: 0 0 12px var(--h1-c);
+      border-bottom: 2px solid var(--h1-c); padding-bottom: 0.45rem;
+      animation: flicker 0.6s ease-in-out;
+    }
+    h2 { color: var(--h2-c); font-size: 1.9rem;  margin: 2rem 0 0.8rem;   text-shadow: 0 0 8px var(--h2-c); }
+    h3 { color: var(--h3-c); font-size: 1.55rem; margin: 1.6rem 0 0.7rem; text-shadow: 0 0 6px var(--h3-c); }
+    h4 { color: var(--h4-c); font-size: 1.28rem; margin: 1.4rem 0 0.6rem; }
+    h5 { color: var(--h5-c); font-size: 1.1rem;  margin: 1.2rem 0 0.5rem; }
+    h6 { color: var(--h6-c); font-size: 1rem;    margin: 1rem  0 0.5rem; }
+    h1:hover, h2:hover { animation: glow 2s ease-in-out infinite; }
+
+    /* ── TITLE BLOCK ───────────────────────────────────────────────── */
+    header#title-block-header {
+      border-bottom: 1px solid var(--accent-dim);
+      margin-bottom: 2rem; padding-bottom: 1rem;
+    }
+    .title    { color: var(--h1-c); font-size: 2.6rem; text-shadow: 0 0 14px var(--h1-c); display: block; }
+    .subtitle { color: var(--h2-c); font-size: 1.3rem; margin-top: 0.4rem; display: block; }
+    .author   { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; display: block; }
+    .date     { color: var(--text-muted); font-size: 0.85rem; display: block; }
+
+    /* ── PARAGRAPHS ────────────────────────────────────────────────── */
+    p { margin-bottom: 1rem; color: var(--text-primary); }
+
+    /* ── LINKS ─────────────────────────────────────────────────────── */
+    a { color: var(--c-link); text-decoration: none; border-bottom: 1px dotted var(--c-link); transition: all 0.3s; }
+    a:hover { color: var(--c-link-hv); border-bottom-color: var(--c-link-hv); text-shadow: 0 0 8px var(--c-link-hv); }
+    a[href^="http"]::after { content: ' ↗'; font-size: 0.75em; opacity: 0.6; }
+
+    /* ── LISTS ─────────────────────────────────────────────────────── */
+    ul, ol { margin: 1rem 0; padding-left: 2rem; }
+    li { margin: 0.45rem 0; color: var(--text-primary); }
+    ul li::marker          { color: var(--c-green);  font-size: 1.2em; }
+    ul ul li::marker       { color: var(--accent); }
+    ul ul ul li::marker    { color: var(--c-yellow); }
+    ol li::marker          { color: var(--c-orange); font-weight: bold; }
+
+    ul.task-list { list-style: none; padding-left: 0; }
+    ul.task-list li { position: relative; padding-left: 2rem; margin: 0.65rem 0; }
+    ul.task-list li input[type="checkbox"] {
+      position: absolute; left: 0; top: 0.2rem;
+      width: 1.15rem; height: 1.15rem;
+      cursor: pointer; appearance: none;
+      background: transparent;
+      border: 2px solid var(--accent); border-radius: 3px; transition: all 0.3s;
+    }
+    ul.task-list li input[type="checkbox"]:hover {
+      border-color: var(--c-magenta); box-shadow: 0 0 10px rgba(255,0,255,0.4);
+    }
+    ul.task-list li input[type="checkbox"]:checked {
+      background-color: var(--c-green); border-color: var(--c-green);
+      box-shadow: 0 0 10px rgba(0,255,65,0.45);
+    }
+    ul.task-list li input[type="checkbox"]:checked::after {
+      content: "✓"; position: absolute;
+      color: var(--bg-base); font-size: 0.85rem; font-weight: bold;
+      left: 50%; top: 50%; transform: translate(-50%,-50%);
+    }
+    ul.task-list li input[type="checkbox"]:checked ~ * {
+      color: var(--text-muted); text-decoration: line-through;
+    }
+
+    /* ── CODE BLOCKS ───────────────────────────────────────────────── */
+    pre {
+      background-color: rgba(13,17,23,0.85);
+      border: 1px solid var(--accent);
+      border-left: 3px solid var(--c-green);
+      padding: 1.4rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border-radius: 6px;
+      box-shadow: 0 0 20px var(--accent-dim);
+      position: relative;
+      line-height: 1.55;
+    }
+    pre code {
+      color: var(--text-primary); font-size: 0.94em;
+      background: none; border: none; padding: 0;
+      display: block;
+      /* Pad right so text doesn't hide under copy button */
+      padding-right: 3.8rem;
+    }
+    code { font-family: 'Consolas','Monaco','Courier New',monospace; }
+
+    /* ── COPY BUTTON (injected by JS, NOT a pseudo-element) ────────── */
+    .copy-btn {
+      position: absolute; top: 0.55rem; right: 0.65rem;
+      background: transparent;
+      border: 1px solid var(--accent); border-radius: 3px;
+      padding: 0.12rem 0.5rem;
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      font-size: 0.68rem; color: var(--accent);
+      cursor: pointer; opacity: 0;
+      transition: opacity 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+      line-height: 1.5; letter-spacing: 0.04em;
+    }
+    pre:hover .copy-btn         { opacity: 0.8; }
+    .copy-btn:hover             { background: var(--accent-dim); opacity: 1 !important; }
+    .copy-btn.copied            { opacity: 1 !important; color: var(--c-green); border-color: var(--c-green); }
+
+    /* ── INLINE CODE ───────────────────────────────────────────────── */
+    :not(pre) > code {
+      background-color: rgba(13,17,23,0.75);
+      padding: 0.18rem 0.48rem; border-radius: 4px;
+      color: var(--c-yellow); font-size: 0.9em;
+      border: 1px solid rgba(255,215,0,0.28);
+    }
+
+    /* ── PANDOC SYNTAX HIGHLIGHT SPANS ────────────────────────────── */
+    code span.kw                      { color: var(--c-magenta); }
+    code span.fu                      { color: var(--c-yellow); }
+    code span.st, code span.vs        { color: var(--c-green); }
+    code span.co, code span.an,
+    code span.cv, code span.in,
+    code span.do                      { color: var(--text-muted); font-style: italic; }
+    code span.dv, code span.fl,
+    code span.pp                      { color: var(--c-orange); }
+    code span.op, code span.at        { color: var(--accent); }
+    code span.va                      { color: var(--c-blue); }
+    code span.dt, code span.cn        { color: var(--c-purple); }
+    code span.ch, code span.sc,
+    code span.ss                      { color: var(--c-yellow); }
+    code span.er, code span.al        { color: var(--c-red); font-weight: bold; }
+    code span.wa                      { color: var(--c-orange); font-style: italic; }
+    code span.im, code span.bu,
+    code span.ex                      { color: var(--c-blue); }
+
+    /* ── BLOCKQUOTES ───────────────────────────────────────────────── */
+    blockquote {
+      border-left: 4px solid var(--c-purple);
+      margin: 1.2rem 0; padding: 0.9rem 1.2rem;
+      color: var(--c-purple); font-style: italic;
+      background-color: rgba(162,119,255,0.05);
+      border-radius: 0 4px 4px 0;
+    }
+
+    /* ── TABLES ────────────────────────────────────────────────────── */
+    table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      margin: 1.5rem 0;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 18px var(--accent-dim);
+      border-radius: 4px; overflow: hidden;
+    }
+    th {
+      background-color: rgba(37,37,38,0.92); color: var(--accent);
+      padding: 0.75rem 0.9rem; text-align: left;
+      border-right: 1px solid var(--accent); border-bottom: 2px solid var(--accent);
+      text-shadow: 0 0 5px var(--accent); font-size: 0.95em;
+    }
+    th:last-child { border-right: none; }
+    td {
+      padding: 0.7rem 0.9rem;
+      border-right: 1px solid var(--accent-dim); border-bottom: 1px solid var(--accent-dim);
+      color: var(--accent-soft); transition: color 0.2s;
+    }
+    td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+    tr:hover { background-color: var(--accent-dim); }
+    tr:hover td { color: var(--accent); }
+
+    /* ── HR ────────────────────────────────────────────────────────── */
+    hr { border: none; border-top: 1px solid var(--c-hr); margin: 2.2rem 0; box-shadow: 0 0 8px var(--c-hr); opacity: 0.55; }
+
+    /* ── INLINE FORMATTING ─────────────────────────────────────────── */
+    strong, b { color: var(--c-orange); font-weight: bold; }
+    em, i     { color: var(--c-yellow); font-style: italic; }
+    del, s    { color: var(--c-red); text-decoration: line-through; opacity: 0.7; }
+    mark      { background-color: rgba(255,215,0,0.18); color: var(--c-yellow); padding: 0.1rem 0.32rem; border-radius: 2px; }
+    sub, sup  { color: var(--c-magenta); }
+    kbd {
+      background-color: var(--bg-surface); border: 1px solid var(--accent); border-radius: 3px;
+      padding: 0.18rem 0.48rem; font-family: inherit; color: var(--accent);
+      box-shadow: 0 2px 0 var(--accent), 0 0 8px var(--accent-dim); font-size: 0.88em;
+    }
+
+    /* ── DEFINITION LISTS ──────────────────────────────────────────── */
+    dl  { margin: 1rem 0; }
+    dt  { color: var(--c-orange); font-weight: bold; margin-top: 0.8rem; }
+    dd  { margin-left: 2rem; padding-left: 0.9rem; border-left: 2px solid var(--c-green); color: var(--text-primary); }
+
+    /* ── IMAGES ────────────────────────────────────────────────────── */
+    img {
+      max-width: 100%; height: auto; display: block;
+      border: 2px solid var(--accent); border-radius: 4px;
+      margin: 1rem 0; box-shadow: 0 0 20px var(--accent-dim);
+    }
+    figure { margin: 1.5rem 0; text-align: center; }
+    figcaption { color: var(--c-purple); font-style: italic; margin-top: 0.5rem; font-size: 0.88em; }
+
+    /* ── FOOTNOTES ─────────────────────────────────────────────────── */
+    .footnotes { border-top: 1px solid var(--accent-dim); margin-top: 3rem; padding-top: 1rem; font-size: 0.88em; color: var(--text-muted); }
+    .footnotes ol li::marker { color: var(--accent); }
+
+    /* ── ABSTRACT ──────────────────────────────────────────────────── */
+    div.abstract { border-left: 3px solid var(--accent); padding-left: 1rem; margin: 1.5rem 0; }
+    div.abstract p.abstract-title { color: var(--accent); font-weight: bold; margin-bottom: 0.4rem; }
+
+    /* ── TOC ───────────────────────────────────────────────────────── */
+    nav#TOC {
+      background: rgba(13,17,23,0.72);
+      border: 1px solid var(--accent-dim); border-left: 3px solid var(--accent);
+      border-radius: 6px; padding: 1.2rem 1.5rem; margin: 0 0 2.5rem;
+      box-shadow: 0 0 16px var(--accent-dim);
+    }
+    nav#TOC::before {
+      content: '// TABLE OF CONTENTS'; display: block;
+      color: var(--accent); font-size: 0.76rem; letter-spacing: 0.1em;
+      margin-bottom: 0.8rem; text-shadow: 0 0 6px var(--accent);
+    }
+    nav#TOC ul    { list-style: none; padding-left: 0; margin: 0; }
+    nav#TOC ul ul { padding-left: 1.2rem; }
+    nav#TOC li    { margin: 0.28rem 0; }
+    nav#TOC li::before { content: '> '; color: var(--c-green); }
+    nav#TOC a     { color: var(--text-primary); border-bottom: none; font-size: 0.9rem; transition: color 0.2s; }
+    nav#TOC a:hover { color: var(--accent); text-shadow: 0 0 6px var(--accent); }
+    nav#TOC a::after { content: none; }
+
+    /* ── COLLAPSIBLE SECTIONS ──────────────────────────────────────── */
+    .section-toggle { cursor: pointer; user-select: none; }
+    .section-toggle::before {
+      content: '▼'; font-size: 0.6em; opacity: 0.65;
+      display: inline-block; margin-right: 0.45rem;
+      transition: transform 0.25s ease; vertical-align: middle;
+    }
+    .section-toggle.collapsed::before { transform: rotate(-90deg); }
+    .section-body { overflow: hidden; transition: max-height 0.32s ease; }
+
+    /* ── SCROLLBARS ────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg-surface); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--c-magenta); }
+
+    /* ── SELECTION ─────────────────────────────────────────────────── */
+    ::selection { background-color: var(--accent-glow); color: var(--accent); }
+
+    /* ── ANIMATIONS ────────────────────────────────────────────────── */
+    @keyframes glow {
+      0%,100% { text-shadow: 0 0 5px currentColor; }
+      50%      { text-shadow: 0 0 24px currentColor, 0 0 42px currentColor; }
+    }
+    @keyframes flicker {
+      0%,100% { opacity: 1; }
+      41%,43% { opacity: 0.78; }
+      45%,47% { opacity: 0.92; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- OVERLAY LAYERS (z-index 1–6, behind body z-index 10) -->
+<div id="grain"     aria-hidden="true"></div>
+<div id="scanlines" aria-hidden="true"></div>
+<div id="vignette"  aria-hidden="true"></div>
+<div id="bg-noise"  aria-hidden="true"></div>
+<button id="theme-toggle" aria-label="Toggle color theme">[ THEME: CYAN ]</button>
+
+<!-- PANDOC DOCUMENT -->
+
+
+<h1 id="umass-ctf-2026-write-up">UMass CTF 2026 Write-Up</h1>
+<h2 id="brick-by-brick">Brick by Brick</h2>
+<p><strong><em>Category: Web Exploitation</em></strong></p>
+<p><strong><em>Difficulty: Easy</em></strong></p>
+<p><strong><em>URL: <a
+href="http://brick-by-brick.web.ctf.umasscybersec.org:32768/">http://brick-by-brick.web.ctf.umasscybersec.org:32768/</a></em></strong></p>
+<hr />
+<h2 id="challenge-description">Challenge Description</h2>
+<blockquote>
+<p>“I found this old portal for BrickWorks Co. They say their internal
+systems are secure, but I’m not so sure. Can you find the hidden admin
+dashboard and get the flag?”</p>
+</blockquote>
+<hr />
+<p>Navigating to the provided URL reveals a static welcome portal with
+no apparent functionality or interactive elements.</p>
+<p><img src="images/welcomeportal.png" /></p>
+<p>The first thing worth checking is <code>robots.txt</code>,
+application owners often list paths they want excluded from search
+engine indexing, which can inadvertently expose internal endpoints.</p>
+<p><img src="images/robotstxt.png" /></p>
+<p><code>robots.txt</code> surfaces three interesting paths:
+<code>/assembly-guide.txt</code>, <code>/q3-report.txt</code>, and
+<code>/it-onboarding.txt</code>.</p>
+<p>Checking them in order <code>/assembly-guide.txt</code></p>
+<p><img src="images/assembly-guide.png" /></p>
+<p>Similarly, <code>/q3-report.txt</code> is an internal quarterly
+report with no direct exploit vectors.</p>
+<p><img src="images/q3-report.png" /></p>
+<p><code>/it-onboarding.txt</code> however is where things get
+interesting. Two sections stand out:</p>
+<ul>
+<li><strong>Section 1 — Document Portal:</strong> Staff access files
+through the <code>?file=</code> parameter on the intranet.</li>
+<li><strong>Section 2 — Admin Dashboard:</strong> Admin credentials are
+stored in <code>config.php</code> in the web root, accessible to the IT
+team.</li>
+</ul>
+<p><img src="images/it-onboarding.png" /></p>
+<p>An unsanitized <code>?file=</code> parameter is a textbook LFI
+vector. Requesting <code>/?file=config.php</code> returns the file in
+plaintext, exposing both database credentials and the admin account
+configuration:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode php"><code class="sourceCode php"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Database</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;DB_HOST&#39;</span><span class="ot">,</span> <span class="st">&#39;localhost&#39;</span>)<span class="ot">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;DB_NAME&#39;</span><span class="ot">,</span> <span class="st">&#39;brickworks&#39;</span>)<span class="ot">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;DB_USER&#39;</span><span class="ot">,</span> <span class="st">&#39;brickworks_app&#39;</span>)<span class="ot">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;DB_PASS&#39;</span><span class="ot">,</span> <span class="st">&#39;Br1ckW0rks_db_2024!&#39;</span>)<span class="ot">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">// </span><span class="al">WARNING</span><span class="co">: SYSTEM IS CURRENTLY USING DEFAULT FACTORY CREDENTIALS.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">// </span><span class="al">TODO</span><span class="co">: Change &#39;administrator&#39; account from default password.</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;ADMIN_USER&#39;</span><span class="ot">,</span> <span class="st">&#39;administrator&#39;</span>)<span class="ot">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">define</span>(<span class="st">&#39;ADMIN_PASS&#39;</span><span class="ot">,</span> <span class="st">&#39;[deleted it for safety reasons - Tom]&#39;</span>)<span class="ot">;</span></span></code></pre></div>
+<p><img src="images/configphp.png" /></p>
+<p>The admin username is <code>administrator</code>. The password was
+redacted by Tom, but the in-code warning tells us everything we need —
+the account is still on default factory credentials. Trying
+<code>administrator:administrator</code> at
+<code>/dashboard-admin.php</code> is the logical next move.</p>
+<p><img src="images/dashboard-admin.png" /></p>
+<p>Authentication succeeds and the flag is retrieved.</p>
+<p><img src="images/Flag.png" /></p>
+<blockquote>
+<p><strong>FLAG</strong> 🚩:
+<strong>UMASS{4lw4ys_ch4ng3_d3f4ult_cr3d3nt14ls}</strong></p>
+</blockquote>
+<hr />
+<p><em>Written for UMassCTF 2026 — Web Exploitation</em></p>
+<p><em>By Errorcode14</em></p>
+
+
+<script>
+(function () {
+  'use strict';
+
+  var html = document.documentElement;
+  function cssVar(n) { return getComputedStyle(html).getPropertyValue(n).trim(); }
+
+  /* ── 1. FLOATING TERMINAL NOISE ── */
+  var SNIPPETS = [
+    '01101100 01100011','> ./exploit.py','[SYSTEM DEBL] Connection...',
+    '> chmod +x script.sh','0011010l','int main() {','[INF0] Kernel...',
+    '0x1F43','void process_data','log [null]','> ls -la /var/log',
+    '0x6F42','> ssh-keygen -t rsa','0x1A2B3C','std::cout <<',
+    '1011011001','[ERROR] SegFault at 0x0...','> ps aux | grep root',
+    '6v4AEB8DEF8C','ACCESS DENIED','HANDSHAKE INIT','0xdeadbeef',
+    '0xcafebabe','SIGNAL_04.CTF','> nmap -sV --script vuln',
+    'ROP chain','ret2libc','> base64 -d flag.txt','KEY EXCHANGE',
+    'PAYLOAD STAGED','> cat /etc/shadow','[WARN] Buffer overflow',
+    '> ./run_exploit.sh','[CTF] flag{...}','int *ptr = NULL;',
+    '> strings binary | grep flag','#include <stdio.h>',
+    '> objdump -d binary','SIGILL at 0x4010f3',' id && whoami'
+  ];
+
+  var noiseEl = document.getElementById('bg-noise');
+  var spans   = [];
+
+  function buildNoise() {
+    noiseEl.innerHTML = '';
+    spans = [];
+    var W = window.innerWidth, H = window.innerHeight;
+    var count = Math.floor((W * H) / 15000);
+    var color = cssVar('--noise-color');
+    for (var i = 0; i < count; i++) {
+      var s = document.createElement('span');
+      s.textContent    = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)];
+      s.style.left     = (Math.random() * 93) + '%';
+      s.style.top      = (Math.random() * 93) + '%';
+      s.style.fontSize = (7.5 + Math.random() * 3.5).toFixed(1) + 'px';
+      s.style.opacity  = (5 + Math.random() * 0.17).toFixed(2);
+      s.style.transform= 'scale(' + (0.5 + Math.random() * 0.55).toFixed(2) + ')';
+      s.style.color    = color;
+      noiseEl.appendChild(s);
+      spans.push(s);
+    }
+  }
+
+  function retintNoise() {
+    var color = cssVar('--noise-color');
+    for (var i = 0; i < spans.length; i++) spans[i].style.color = color;
+  }
+
+  buildNoise();
+
+  /* ── 2. THEME TOGGLE
+     Class applied only to <html> so :root vars cascade correctly. ── */
+  var themeBtn = document.getElementById('theme-toggle');
+  var isGreen  = html.classList.contains('theme-green');
+
+  function applyTheme(green) {
+    isGreen = green;
+    html.classList.toggle('theme-green', green);
+    themeBtn.textContent       = green ? '[ THEME: GREEN ]' : '[ THEME: CYAN ]';
+    var a = cssVar('--accent');
+    themeBtn.style.borderColor = a;
+    themeBtn.style.color       = a;
+    themeBtn.style.textShadow  = '0 0 6px ' + a;
+    setTimeout(retintNoise, 20);
+    try { localStorage.setItem('cyber-theme', green ? 'green' : 'cyan'); } catch(e){}
+  }
+
+  try {
+    var saved = localStorage.getItem('cyber-theme');
+    if (saved === 'green' && !isGreen)  applyTheme(true);
+    else if (saved === 'cyan' && isGreen) applyTheme(false);
+  } catch(e){}
+
+  themeBtn.addEventListener('click', function () { applyTheme(!isGreen); });
+
+  /* ── 3. COPY BUTTONS ON CODE BLOCKS
+     One real <button> per <pre>. Uses IIFE to close over each `pre`
+     so there are no shared-variable bugs. Falls back to execCommand
+     for non-HTTPS contexts. Never captures button's own text. ── */
+  document.querySelectorAll('pre').forEach(function (pre) {
+    (function (pre) {
+      var btn      = document.createElement('button');
+      btn.textContent = 'copy';
+      btn.className   = 'copy-btn';
+      btn.setAttribute('aria-label', 'Copy code to clipboard');
+      pre.appendChild(btn);
+
+      pre.addEventListener('mouseenter', function () { btn.style.opacity = '0.8'; });
+      pre.addEventListener('mouseleave', function () {
+        if (!btn.classList.contains('copied')) btn.style.opacity = '0';
+      });
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var codeEl = pre.querySelector('code');
+        var text;
+        if (codeEl) {
+          /* Use textContent — not innerText — to avoid layout/style reads */
+          text = codeEl.textContent;
+        } else {
+          /* Temporarily detach button so its text isn't captured */
+          pre.removeChild(btn);
+          text = pre.textContent;
+          pre.appendChild(btn);
+        }
+
+        function onSuccess() {
+          btn.textContent = 'copied!';
+          btn.classList.add('copied');
+          btn.style.opacity = '1';
+          setTimeout(function () {
+            btn.textContent = 'copy';
+            btn.classList.remove('copied');
+            btn.style.opacity = '0';
+          }, 1800);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(onSuccess).catch(function(){});
+        } else {
+          /* execCommand fallback */
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          try { document.execCommand('copy'); onSuccess(); } catch(err){}
+          document.body.removeChild(ta);
+        }
+      });
+    })(pre);
+  });
+
+  /* ── 4. EXTERNAL LINKS → new tab ── */
+  document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+    a.target = '_blank';
+    a.rel    = 'noopener noreferrer';
+  });
+
+  /* ── 5. COLLAPSIBLE H2–H6 SECTIONS
+     Fixed: no RegExp.$1, proper double-rAF collapse, correct
+     max-height restore on expand, nested sections work. ── */
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll('h2,h3,h4,h5,h6')
+  );
+
+  headings.forEach(function (h) {
+    var level    = parseInt(h.tagName.charAt(1), 10);
+    var siblings = [];
+    var el       = h.nextElementSibling;
+    while (el) {
+      var m = el.tagName.match(/^H([1-6])$/);
+      if (m && parseInt(m[1], 10) <= level) break;
+      siblings.push(el);
+      el = el.nextElementSibling;
+    }
+    if (!siblings.length) return;
+
+    h.classList.add('section-toggle');
+    h.setAttribute('title', 'Click to collapse / expand');
+
+    var wrap      = document.createElement('div');
+    wrap.className = 'section-body';
+    h.parentNode.insertBefore(wrap, siblings[0]);
+    siblings.forEach(function (s) { wrap.appendChild(s); });
+
+    requestAnimationFrame(function () {
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
+    });
+
+    h.addEventListener('click', function () {
+      if (wrap.classList.contains('collapsed')) {
+        /* Expand */
+        wrap.classList.remove('collapsed');
+        h.classList.remove('collapsed');
+        wrap.style.maxHeight = wrap.scrollHeight + 'px';
+        /* After transition, set to 'none' so inner content can grow */
+        wrap.addEventListener('transitionend', function onEnd() {
+          wrap.removeEventListener('transitionend', onEnd);
+          if (!wrap.classList.contains('collapsed'))
+            wrap.style.maxHeight = wrap.scrollHeight + 'px';
+        });
+      } else {
+        /* Collapse — lock current height, then zero on next frame */
+        wrap.style.maxHeight = wrap.scrollHeight + 'px';
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            wrap.classList.add('collapsed');
+            h.classList.add('collapsed');
+            wrap.style.maxHeight = '0px';
+          });
+        });
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
