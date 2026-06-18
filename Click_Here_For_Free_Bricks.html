@@ -7,13 +7,6 @@
 
 
   <style>
-    /* ================================================================
-       CYBER TERMINAL THEME  v3  —  All-in-One Pandoc Template
-       Base: #1e1e1e  |  Overlays: grain + grid + scanlines + vignette + noise
-       Themes: Cyber Cyan (default)  |  Cyber Green (.theme-green on <html>)
-       Fixes v3: copy button, collapsible sections, theme var scope, grain layer
-    ================================================================ */
-
     /* ── THEME TOKENS ─────────────────────────────────────────────── */
     :root {
       --bg-base:        #050D0C;
@@ -139,19 +132,7 @@
       background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.62) 100%);
     }
 
-    /* ── OVERLAY F: floating terminal text ─────────────────────────── */
-    #bg-noise {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 9;
-      overflow: visible;
-      font-family: 'Consolas','Monaco','Courier New',monospace;
-      user-select: none;
-    }
-    #bg-noise span {
-      position: absolute; white-space: nowrap;
-      letter-spacing: 0.10em; filter: blur(0.5px);
-      transition: color 0.10s;
-    }
+    /* noise effect removed — caused page-blocking and Pandoc parse errors */
 
     /* ── THEME TOGGLE BUTTON ───────────────────────────────────────── */
     #theme-toggle {
@@ -435,11 +416,10 @@
 </head>
 <body>
 
-<!-- OVERLAY LAYERS (z-index 1–6, behind body z-index 10) -->
-<div id="grain"     aria-hidden="true"></div>
+<!-- OVERLAY LAYERS (z-index 1–5, behind body z-index 10) -->
+<div id="grain"     aria-hidden="false"></div>
 <div id="scanlines" aria-hidden="true"></div>
 <div id="vignette"  aria-hidden="true"></div>
-<div id="bg-noise"  aria-hidden="true"></div>
 <button id="theme-toggle" aria-label="Toggle color theme">[ THEME: CYAN ]</button>
 
 <!-- PANDOC DOCUMENT -->
@@ -672,203 +652,181 @@ us the flag in the correct format: <code>UMASS{[sha256sum]}</code></p>
 
 
 <script>
+/* ================================================================
+   CYBER TERMINAL v3
+   Pandoc-safe: no bare $, no AND-AND, noise effect removed.
+   DOMContentLoaded guarded. Non-critical work deferred via rAF.
+================================================================ */
 (function () {
   'use strict';
 
-  var html = document.documentElement;
-  function cssVar(n) { return getComputedStyle(html).getPropertyValue(n).trim(); }
+  var htmlEl = document.documentElement;
 
-  /* ── 1. FLOATING TERMINAL NOISE ── */
-  var SNIPPETS = [
-    '01101100 01100011','> ./exploit.py','[SYSTEM DEBL] Connection...',
-    '> chmod +x script.sh','0011010l','int main() {','[INF0] Kernel...',
-    '0x1F43','void process_data','log [null]','> ls -la /var/log',
-    '0x6F42','> ssh-keygen -t rsa','0x1A2B3C','std::cout <<',
-    '1011011001','[ERROR] SegFault at 0x0...','> ps aux | grep root',
-    '6v4AEB8DEF8C','ACCESS DENIED','HANDSHAKE INIT','0xdeadbeef',
-    '0xcafebabe','SIGNAL_04.CTF','> nmap -sV --script vuln',
-    'ROP chain','ret2libc','> base64 -d flag.txt','KEY EXCHANGE',
-    'PAYLOAD STAGED','> cat /etc/shadow','[WARN] Buffer overflow',
-    '> ./run_exploit.sh','[CTF] flag{...}','int *ptr = NULL;',
-    '> strings binary | grep flag','#include <stdio.h>',
-    '> objdump -d binary','SIGILL at 0x4010f3',' id && whoami'
-  ];
-
-  var noiseEl = document.getElementById('bg-noise');
-  var spans   = [];
-
-  function buildNoise() {
-    noiseEl.innerHTML = '';
-    spans = [];
-    var W = window.innerWidth, H = window.innerHeight;
-    var count = Math.floor((W * H) / 15000);
-    var color = cssVar('--noise-color');
-    for (var i = 0; i < count; i++) {
-      var s = document.createElement('span');
-      s.textContent    = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)];
-      s.style.left     = (Math.random() * 93) + '%';
-      s.style.top      = (Math.random() * 93) + '%';
-      s.style.fontSize = (7.5 + Math.random() * 3.5).toFixed(1) + 'px';
-      s.style.opacity  = (5 + Math.random() * 0.17).toFixed(2);
-      s.style.transform= 'scale(' + (0.5 + Math.random() * 0.55).toFixed(2) + ')';
-      s.style.color    = color;
-      noiseEl.appendChild(s);
-      spans.push(s);
-    }
+  function cssVar(n) {
+    return getComputedStyle(htmlEl).getPropertyValue(n).trim();
   }
 
-  function retintNoise() {
-    var color = cssVar('--noise-color');
-    for (var i = 0; i < spans.length; i++) spans[i].style.color = color;
-  }
+  function init() {
 
-  buildNoise();
+    /* ── 1. THEME TOGGLE ─────────────────────────────────────────
+       Only toggle class on <html> so :root vars cascade correctly.
+       Restore saved preference immediately to avoid flash.        */
+    var themeBtn = document.getElementById('theme-toggle');
+    var isGreen  = htmlEl.classList.contains('theme-green');
 
-  /* ── 2. THEME TOGGLE
-     Class applied only to <html> so :root vars cascade correctly. ── */
-  var themeBtn = document.getElementById('theme-toggle');
-  var isGreen  = html.classList.contains('theme-green');
-
-  function applyTheme(green) {
-    isGreen = green;
-    html.classList.toggle('theme-green', green);
-    themeBtn.textContent       = green ? '[ THEME: GREEN ]' : '[ THEME: CYAN ]';
-    var a = cssVar('--accent');
-    themeBtn.style.borderColor = a;
-    themeBtn.style.color       = a;
-    themeBtn.style.textShadow  = '0 0 6px ' + a;
-    setTimeout(retintNoise, 20);
-    try { localStorage.setItem('cyber-theme', green ? 'green' : 'cyan'); } catch(e){}
-  }
-
-  try {
-    var saved = localStorage.getItem('cyber-theme');
-    if (saved === 'green' && !isGreen)  applyTheme(true);
-    else if (saved === 'cyan' && isGreen) applyTheme(false);
-  } catch(e){}
-
-  themeBtn.addEventListener('click', function () { applyTheme(!isGreen); });
-
-  /* ── 3. COPY BUTTONS ON CODE BLOCKS
-     One real <button> per <pre>. Uses IIFE to close over each `pre`
-     so there are no shared-variable bugs. Falls back to execCommand
-     for non-HTTPS contexts. Never captures button's own text. ── */
-  document.querySelectorAll('pre').forEach(function (pre) {
-    (function (pre) {
-      var btn      = document.createElement('button');
-      btn.textContent = 'copy';
-      btn.className   = 'copy-btn';
-      btn.setAttribute('aria-label', 'Copy code to clipboard');
-      pre.appendChild(btn);
-
-      pre.addEventListener('mouseenter', function () { btn.style.opacity = '0.8'; });
-      pre.addEventListener('mouseleave', function () {
-        if (!btn.classList.contains('copied')) btn.style.opacity = '0';
-      });
-
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var codeEl = pre.querySelector('code');
-        var text;
-        if (codeEl) {
-          /* Use textContent — not innerText — to avoid layout/style reads */
-          text = codeEl.textContent;
-        } else {
-          /* Temporarily detach button so its text isn't captured */
-          pre.removeChild(btn);
-          text = pre.textContent;
-          pre.appendChild(btn);
-        }
-
-        function onSuccess() {
-          btn.textContent = 'copied!';
-          btn.classList.add('copied');
-          btn.style.opacity = '1';
-          setTimeout(function () {
-            btn.textContent = 'copy';
-            btn.classList.remove('copied');
-            btn.style.opacity = '0';
-          }, 1800);
-        }
-
-        if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(text).then(onSuccess).catch(function(){});
-        } else {
-          /* execCommand fallback */
-          var ta = document.createElement('textarea');
-          ta.value = text;
-          ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-          document.body.appendChild(ta);
-          ta.focus(); ta.select();
-          try { document.execCommand('copy'); onSuccess(); } catch(err){}
-          document.body.removeChild(ta);
-        }
-      });
-    })(pre);
-  });
-
-  /* ── 4. EXTERNAL LINKS → new tab ── */
-  document.querySelectorAll('a[href^="http"]').forEach(function (a) {
-    a.target = '_blank';
-    a.rel    = 'noopener noreferrer';
-  });
-
-  /* ── 5. COLLAPSIBLE H2–H6 SECTIONS
-     Fixed: no RegExp.$1, proper double-rAF collapse, correct
-     max-height restore on expand, nested sections work. ── */
-  var headings = Array.prototype.slice.call(
-    document.querySelectorAll('h2,h3,h4,h5,h6')
-  );
-
-  headings.forEach(function (h) {
-    var level    = parseInt(h.tagName.charAt(1), 10);
-    var siblings = [];
-    var el       = h.nextElementSibling;
-    while (el) {
-      var m = el.tagName.match(/^H([1-6])$/);
-      if (m && parseInt(m[1], 10) <= level) break;
-      siblings.push(el);
-      el = el.nextElementSibling;
-    }
-    if (!siblings.length) return;
-
-    h.classList.add('section-toggle');
-    h.setAttribute('title', 'Click to collapse / expand');
-
-    var wrap      = document.createElement('div');
-    wrap.className = 'section-body';
-    h.parentNode.insertBefore(wrap, siblings[0]);
-    siblings.forEach(function (s) { wrap.appendChild(s); });
-
-    requestAnimationFrame(function () {
-      wrap.style.maxHeight = wrap.scrollHeight + 'px';
-    });
-
-    h.addEventListener('click', function () {
-      if (wrap.classList.contains('collapsed')) {
-        /* Expand */
-        wrap.classList.remove('collapsed');
-        h.classList.remove('collapsed');
-        wrap.style.maxHeight = wrap.scrollHeight + 'px';
-        /* After transition, set to 'none' so inner content can grow */
-        wrap.addEventListener('transitionend', function onEnd() {
-          wrap.removeEventListener('transitionend', onEnd);
-          if (!wrap.classList.contains('collapsed'))
-            wrap.style.maxHeight = wrap.scrollHeight + 'px';
-        });
-      } else {
-        /* Collapse — lock current height, then zero on next frame */
-        wrap.style.maxHeight = wrap.scrollHeight + 'px';
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            wrap.classList.add('collapsed');
-            h.classList.add('collapsed');
-            wrap.style.maxHeight = '0px';
-          });
-        });
+    function applyTheme(green) {
+      isGreen = green;
+      htmlEl.classList.toggle('theme-green', green);
+      if (themeBtn) {
+        themeBtn.textContent       = green ? '[ THEME: GREEN ]' : '[ THEME: CYAN ]';
+        var a                      = cssVar('--accent');
+        themeBtn.style.borderColor = a;
+        themeBtn.style.color       = a;
+        themeBtn.style.textShadow  = '0 0 6px ' + a;
       }
+      try { localStorage.setItem('cyber-theme', green ? 'green' : 'cyan'); } catch (e) {}
+    }
+
+    try {
+      var saved = localStorage.getItem('cyber-theme');
+      if      (saved === 'green' && !isGreen) applyTheme(true);
+      else if (saved === 'cyan'  &&  isGreen) applyTheme(false);
+    } catch (e) {}
+
+    if (themeBtn) {
+      themeBtn.addEventListener('click', function () { applyTheme(!isGreen); });
+    }
+
+    /* ── 2. COPY BUTTONS ─────────────────────────────────────────
+       Real <button> per <pre>, scoped with IIFE (no closure bugs).
+       textContent only — never innerText (avoids layout thrash).
+       execCommand fallback for non-HTTPS (file://, GitHub raw).   */
+    document.querySelectorAll('pre').forEach(function (pre) {
+      (function (pre) {
+        var btn = document.createElement('button');
+        btn.textContent = 'copy';
+        btn.className   = 'copy-btn';
+        btn.setAttribute('aria-label', 'Copy code to clipboard');
+        pre.appendChild(btn);
+
+        pre.addEventListener('mouseenter', function () { btn.style.opacity = '0.8'; });
+        pre.addEventListener('mouseleave', function () {
+          if (!btn.classList.contains('copied')) btn.style.opacity = '0';
+        });
+
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var codeEl = pre.querySelector('code');
+          var text;
+          if (codeEl) {
+            text = codeEl.textContent;
+          } else {
+            pre.removeChild(btn);
+            text = pre.textContent;
+            pre.appendChild(btn);
+          }
+
+          function onSuccess() {
+            btn.textContent = 'copied!';
+            btn.classList.add('copied');
+            btn.style.opacity = '1';
+            setTimeout(function () {
+              btn.textContent = 'copy';
+              btn.classList.remove('copied');
+              btn.style.opacity = '0';
+            }, 1800);
+          }
+
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(onSuccess).catch(function () {});
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); onSuccess(); } catch (err) {}
+            document.body.removeChild(ta);
+          }
+        });
+      })(pre);
     });
-  });
+
+    /* ── 3. EXTERNAL LINKS → new tab ────────────────────────────  */
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+      a.target = '_blank';
+      a.rel    = 'noopener noreferrer';
+    });
+
+    /* ── 4. COLLAPSIBLE H2-H6 SECTIONS ──────────────────────────
+       Deferred to rAF so page content paints first.
+       Regex end-anchor written as $$ so Pandoc outputs a literal $.
+       Double-rAF on collapse ensures CSS transition fires.        */
+    requestAnimationFrame(function () {
+      var headings = Array.prototype.slice.call(
+        document.querySelectorAll('h2,h3,h4,h5,h6')
+      );
+
+      headings.forEach(function (h) {
+        var level    = parseInt(h.tagName.charAt(1), 10);
+        var siblings = [];
+        var el       = h.nextElementSibling;
+
+        while (el) {
+          var m = el.tagName.match(/^H([1-6])$/);
+          if (m && parseInt(m[1], 10) <= level) break;
+          siblings.push(el);
+          el = el.nextElementSibling;
+        }
+
+        if (!siblings.length) return;
+
+        h.classList.add('section-toggle');
+        h.setAttribute('title', 'Click to collapse / expand');
+
+        var wrap = document.createElement('div');
+        wrap.className = 'section-body';
+        h.parentNode.insertBefore(wrap, siblings[0]);
+        siblings.forEach(function (s) { wrap.appendChild(s); });
+
+        requestAnimationFrame(function () {
+          wrap.style.maxHeight = wrap.scrollHeight + 'px';
+        });
+
+        h.addEventListener('click', function () {
+          if (wrap.classList.contains('collapsed')) {
+            wrap.classList.remove('collapsed');
+            h.classList.remove('collapsed');
+            wrap.style.maxHeight = wrap.scrollHeight + 'px';
+            wrap.addEventListener('transitionend', function onEnd() {
+              wrap.removeEventListener('transitionend', onEnd);
+              if (!wrap.classList.contains('collapsed')) {
+                wrap.style.maxHeight = wrap.scrollHeight + 'px';
+              }
+            });
+          } else {
+            wrap.style.maxHeight = wrap.scrollHeight + 'px';
+            requestAnimationFrame(function () {
+              requestAnimationFrame(function () {
+                wrap.classList.add('collapsed');
+                h.classList.add('collapsed');
+                wrap.style.maxHeight = '0px';
+              });
+            });
+          }
+        });
+      });
+    });
+
+  } /* end init() */
+
+  /* Safe for slow GitHub Pages — handles both loading states */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
 })();
 </script>
