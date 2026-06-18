@@ -7,6 +7,13 @@
 
 
   <style>
+    /* ================================================================
+       CYBER TERMINAL THEME  v3  —  All-in-One Pandoc Template
+       Base: #1e1e1e  |  Overlays: grain + grid + scanlines + vignette + noise
+       Themes: Cyber Cyan (default)  |  Cyber Green (.theme-green on <html>)
+       Fixes v3: copy button, collapsible sections, theme var scope, grain layer
+    ================================================================ */
+
     /* ── THEME TOKENS ─────────────────────────────────────────────── */
     :root {
       --bg-base:        #050D0C;
@@ -384,14 +391,39 @@
     nav#TOC a::after { content: none; }
 
     /* ── COLLAPSIBLE SECTIONS ──────────────────────────────────────── */
+    /* Strategy: max-height is NEVER used for the expanded state.
+       Expanded = max-height:none (images, tables, nested content never clipped).
+       Collapsed = max-height:0 + overflow:hidden.
+       Transition uses a large fixed value only during the open animation.
+       js-ready class gates everything — content visible before JS runs. */
     .section-toggle { cursor: pointer; user-select: none; }
     .section-toggle::before {
-      content: '▼'; font-size: 0.6em; opacity: 0.65;
+      content: '\25BC'; font-size: 0.6em; opacity: 0.65;
       display: inline-block; margin-right: 0.45rem;
       transition: transform 0.25s ease; vertical-align: middle;
     }
     .section-toggle.collapsed::before { transform: rotate(-90deg); }
-    .section-body { overflow: hidden; transition: max-height 0.32s ease; }
+
+    /* Before JS ready — fully visible, nothing constrained */
+    .section-body {
+      overflow: visible;
+      max-height: none;
+    }
+
+    /* After JS ready — only collapsed sections are hidden */
+    html.js-ready .section-body {
+      overflow: visible;
+      max-height: none;
+    }
+    html.js-ready .section-body.collapsing {
+      overflow: hidden;
+      transition: max-height 0.32s ease;
+    }
+    html.js-ready .section-body.collapsed {
+      overflow: hidden;
+      max-height: 0px !important;
+      transition: max-height 0.32s ease;
+    }
 
     /* ── SCROLLBARS ────────────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -417,7 +449,7 @@
 <body>
 
 <!-- OVERLAY LAYERS (z-index 1–5, behind body z-index 10) -->
-<div id="grain"     aria-hidden="false"></div>
+<div id="grain"     aria-hidden="true"></div>
 <div id="scanlines" aria-hidden="true"></div>
 <div id="vignette"  aria-hidden="true"></div>
 <button id="theme-toggle" aria-label="Toggle color theme">[ THEME: CYAN ]</button>
@@ -760,9 +792,12 @@ us the flag in the correct format: <code>UMASS{[sha256sum]}</code></p>
     });
 
     /* ── 4. COLLAPSIBLE H2-H6 SECTIONS ──────────────────────────
-       Deferred to rAF so page content paints first.
-       Regex end-anchor written as $$ so Pandoc outputs a literal $.
-       Double-rAF on collapse ensures CSS transition fires.        */
+       Key insight: expanded sections use max-height:none (not a px value).
+       This means images and tables are NEVER clipped regardless of load order.
+       Only .collapsed uses max-height:0. The .collapsing class handles
+       the animation frame so CSS transition has something to animate.
+       js-ready is added after DOM wrapping — gates overflow/transition CSS.
+       Regex end-anchor written as $$ so Pandoc outputs a literal $.  */
     requestAnimationFrame(function () {
       var headings = Array.prototype.slice.call(
         document.querySelectorAll('h2,h3,h4,h5,h6')
@@ -789,34 +824,54 @@ us the flag in the correct format: <code>UMASS{[sha256sum]}</code></p>
         wrap.className = 'section-body';
         h.parentNode.insertBefore(wrap, siblings[0]);
         siblings.forEach(function (s) { wrap.appendChild(s); });
-
-        requestAnimationFrame(function () {
-          wrap.style.maxHeight = wrap.scrollHeight + 'px';
-        });
+        /* No inline max-height set — expanded state = max-height:none via CSS */
 
         h.addEventListener('click', function () {
           if (wrap.classList.contains('collapsed')) {
+            /* ── EXPAND ──────────────────────────────────────────────
+               1. Add .collapsing so transition CSS is active
+               2. Set max-height to scrollHeight so it animates up
+               3. On transitionend: remove both classes, clear inline
+                  style → max-height:none takes over (no clipping ever) */
+            var target = wrap.scrollHeight;
+            wrap.classList.add('collapsing');
             wrap.classList.remove('collapsed');
             h.classList.remove('collapsed');
-            wrap.style.maxHeight = wrap.scrollHeight + 'px';
-            wrap.addEventListener('transitionend', function onEnd() {
-              wrap.removeEventListener('transitionend', onEnd);
-              if (!wrap.classList.contains('collapsed')) {
-                wrap.style.maxHeight = wrap.scrollHeight + 'px';
-              }
+            wrap.style.maxHeight = '0px';
+            requestAnimationFrame(function () {
+              wrap.style.maxHeight = target + 'px';
+              wrap.addEventListener('transitionend', function onEnd() {
+                wrap.removeEventListener('transitionend', onEnd);
+                wrap.classList.remove('collapsing');
+                wrap.style.maxHeight = '';
+              });
             });
           } else {
+            /* ── COLLAPSE ────────────────────────────────────────────
+               1. Lock current height as px so transition has a start value
+               2. Add .collapsing for transition CSS
+               3. Double-rAF: set to 0 → transition fires
+               4. On transitionend: swap to .collapsed (pure CSS 0) */
             wrap.style.maxHeight = wrap.scrollHeight + 'px';
+            wrap.classList.add('collapsing');
             requestAnimationFrame(function () {
               requestAnimationFrame(function () {
-                wrap.classList.add('collapsed');
-                h.classList.add('collapsed');
                 wrap.style.maxHeight = '0px';
+                h.classList.add('collapsed');
+                wrap.addEventListener('transitionend', function onEnd() {
+                  wrap.removeEventListener('transitionend', onEnd);
+                  wrap.classList.remove('collapsing');
+                  wrap.classList.add('collapsed');
+                  wrap.style.maxHeight = '';
+                });
               });
             });
           }
         });
       });
+
+      /* DOM wrapping done — now activate overflow/transition CSS */
+      htmlEl.classList.add('js-ready');
     });
 
   } /* end init() */
